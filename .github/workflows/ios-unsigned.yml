@@ -26,9 +26,9 @@ jobs:
         run: npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods dependencies
         run: |
-          sudo gem install cocoapods --no-document
+          brew install cocoapods
           pod --version
-          pod install --project-directory=ios --silent
+          pod install --project-directory=ios --verbose
       - name: Build unsigned app
         run: |
           xcodebuild \

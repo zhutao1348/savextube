@@ -25,7 +25,7 @@ jobs:
       - name: Generate iOS project
         run: npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods dependencies
-        run: npx pod-install ios
+        run: pod install --project-directory=ios --repo-update
       - name: Build unsigned app
         run: |
           xcodebuild \

@@ -61,3 +61,5 @@ export async function login(server: string, username: string, password: string, 
 }
 export const currentUser = (server: string) => request(server, '/api/auth/me');
 export async function logout() { await SecureStore.deleteItemAsync(TOKEN_KEY); }
+export const hasToken = () => SecureStore.getItemAsync(TOKEN_KEY).then(Boolean);
+export const authToken = () => SecureStore.getItemAsync(TOKEN_KEY);

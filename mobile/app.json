@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "SaveXTube",
+    "slug": "savextube-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "savextube",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "experiments": {"typedRoutes": true}
+  }
+}

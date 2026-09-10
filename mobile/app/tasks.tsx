@@ -1,0 +1,3 @@
+import { StyleSheet, Text, View } from 'react-native';
+export default function TasksScreen(){return <View style={styles.page}><Text style={styles.title}>下载任务</Text><View style={styles.empty}><Text style={styles.icon}>↓</Text><Text style={styles.text}>暂无下载任务</Text><Text style={styles.muted}>从下载页粘贴链接开始</Text></View></View>}
+const styles=StyleSheet.create({page:{flex:1,padding:24,backgroundColor:'#f7f9fc'},title:{fontSize:28,fontWeight:'800',color:'#172033'},empty:{alignItems:'center',marginTop:130},icon:{fontSize:42,color:'#2f7df6'},text:{fontSize:17,fontWeight:'700',color:'#344054',marginTop:14},muted:{fontSize:14,color:'#7b8798',marginTop:6}});

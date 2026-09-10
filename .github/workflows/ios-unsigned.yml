@@ -1,0 +1,50 @@
+name: Build unsigned iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Generate iOS project
+        run: npx expo prebuild --platform ios --no-install
+      - name: Build unsigned app
+        run: |
+          xcodebuild \
+            -workspace ios/SaveXTube.xcworkspace \
+            -scheme SaveXTube \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM= \
+            build
+      - name: Package IPA
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -type d | head -n 1)"
+          test -n "$APP_PATH"
+          mkdir -p unsigned/Payload
+          cp -R "$APP_PATH" unsigned/Payload/
+          cd unsigned
+          zip -qry ../SaveXTube-unsigned.ipa Payload
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: SaveXTube-unsigned-ipa
+          path: mobile/SaveXTube-unsigned.ipa
+          if-no-files-found: error

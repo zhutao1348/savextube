@@ -5,6 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "savextube",
+    "ios": {"bundleIdentifier": "com.savextube.mobile", "supportsTablet": true},
     "userInterfaceStyle": "automatic",
     "plugins": ["expo-router"],
     "experiments": {"typedRoutes": true}

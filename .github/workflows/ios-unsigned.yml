@@ -36,6 +36,11 @@ jobs:
           text.gsub!(/PROVISIONING_PROFILE_SPECIFIER = .*?;/, 'PROVISIONING_PROFILE_SPECIFIER = "";')
           File.write(path, text)
           RUBY
+      - name: Install iOS native dependencies
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/diagnostics
+          pod install --project-directory=ios --verbose 2>&1 | tee artifacts/diagnostics/pod-install.log
       - name: Build unsigned app
         run: |
           set -euo pipefail
@@ -72,3 +77,10 @@ jobs:
           name: SaveXTube-unsigned-ipa
           path: mobile/SaveXTube-unsigned.ipa
           if-no-files-found: error
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SaveXTube-ios-build-diagnostics
+          path: mobile/artifacts/diagnostics
+          if-no-files-found: ignore

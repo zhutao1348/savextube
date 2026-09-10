@@ -19,7 +19,7 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - name: Install JavaScript dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Generate iOS project
         run: npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods dependencies

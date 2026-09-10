@@ -25,7 +25,10 @@ jobs:
       - name: Generate iOS project
         run: npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods dependencies
-        run: pod install --project-directory=ios
+        run: |
+          sudo gem install cocoapods --no-document
+          pod --version
+          pod install --project-directory=ios --silent
       - name: Build unsigned app
         run: |
           xcodebuild \

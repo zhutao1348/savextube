@@ -7,48 +7,65 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: mobile
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - name: Install JavaScript dependencies
         run: npm ci --legacy-peer-deps
       - name: Generate iOS project
         run: npx expo prebuild --platform ios --no-install
-      - name: Install CocoaPods dependencies
+      - name: Disable iOS code signing
         run: |
-          brew install cocoapods
-          pod --version
-          pod install --project-directory=ios --verbose
+          PROJECT_FILE="$(find ios -maxdepth 2 -name project.pbxproj -print -quit)"
+          test -n "$PROJECT_FILE"
+          ruby - "$PROJECT_FILE" <<'RUBY'
+          path = ARGV.fetch(0)
+          text = File.read(path)
+          text.gsub!(/CODE_SIGN_STYLE = Automatic;/, 'CODE_SIGN_STYLE = Manual;')
+          text.gsub!(/DEVELOPMENT_TEAM = [A-Z0-9]+;/, 'DEVELOPMENT_TEAM = "";')
+          text.gsub!(/PROVISIONING_PROFILE_SPECIFIER = .*?;/, 'PROVISIONING_PROFILE_SPECIFIER = "";')
+          File.write(path, text)
+          RUBY
       - name: Build unsigned app
         run: |
+          set -euo pipefail
+          mkdir -p artifacts/diagnostics
+          WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"
+          XCODEPROJ="$(find ios -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          test -n "$WORKSPACE"
+          test -n "$XCODEPROJ"
+          SCHEME="$(basename "$XCODEPROJ" .xcodeproj)"
+          xcodebuild -list -workspace "$WORKSPACE" | tee artifacts/diagnostics/schemes.txt
           xcodebuild \
-            -workspace ios/SaveXTube.xcworkspace \
-            -scheme SaveXTube \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
+            -destination generic/platform=iOS \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            DEVELOPMENT_TEAM= \
-            build
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            clean build 2>&1 | tee artifacts/diagnostics/xcodebuild.log
       - name: Package IPA
         run: |
-          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -type d | head -n 1)"
+          APP_PATH="$(find build/DerivedData -path '*/Build/Products/*-iphoneos/*.app' -type d -print -quit)"
           test -n "$APP_PATH"
           mkdir -p unsigned/Payload
           cp -R "$APP_PATH" unsigned/Payload/
-          cd unsigned
-          zip -qry ../SaveXTube-unsigned.ipa Payload
+          ditto -c -k --sequesterRsrc --keepParent unsigned/Payload SaveXTube-unsigned.ipa
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:

@@ -2,10 +2,11 @@
   "expo": {
     "name": "SaveXTube",
     "slug": "savextube-mobile",
+    "icon": "./assets/icon.png",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "savextube",
-    "ios": {"bundleIdentifier": "com.savextube.mobile", "supportsTablet": true},
+    "ios": {"bundleIdentifier": "com.savextube.mobile", "supportsTablet": true, "icon": "./assets/icon.png", "infoPlist": {"NSAppTransportSecurity": {"NSAllowsArbitraryLoads": true}}},
     "userInterfaceStyle": "automatic",
     "plugins": ["expo-router"],
     "experiments": {"typedRoutes": true}

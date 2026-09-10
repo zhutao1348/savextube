@@ -23,3 +23,15 @@ export async function submitDownload(serverUrl: string, url: string) {
   if (!response.ok) throw new Error(`DOWNLOAD_FAILED_${response.status}`);
   return response.json();
 }
+
+async function request(serverUrl: string, path: string, init?: RequestInit): Promise<any> {
+  const response = await fetch(`${serverUrl.replace(/\/$/, '')}${path}`, init);
+  if (!response.ok) throw new Error(`REQUEST_FAILED_${response.status}`);
+  return response.json();
+}
+export const listDownloads = (server: string) => request(server, '/api/downloads');
+export const listHistory = (server: string) => request(server, '/api/history?limit=50');
+export const listFiles = (server: string) => request(server, '/api/files');
+export const listSubscriptions = (server: string) => request(server, '/api/subscriptions');
+export const controlJob = (server: string, id: string, action: 'pause'|'resume'|'cancel') => request(server, `/api/job/${id}/${action}`, { method: 'POST' });
+export const testConnectivity = (server: string) => request(server, '/api/settings/test-connectivity', { method: 'POST' });

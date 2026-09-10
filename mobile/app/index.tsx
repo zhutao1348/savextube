@@ -1,25 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { loadServerUrl, submitDownload } from '@/src/services/api';
-
-export default function DownloadScreen() {
-  const [url, setUrl] = useState('');
-  const [server, setServer] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  useEffect(() => { let active = true; void loadServerUrl().then(value => { if (active) setServer(value); }); return () => { active = false; }; }, []);
-  const submit = async () => {
-    if (!url.trim()) { Alert.alert('请输入链接'); return; }
-    if (!server) { Alert.alert('尚未配置服务端', '请先打开“设置”填写服务端地址。'); return; }
-    setSubmitting(true);
-    try { await submitDownload(server, url); setUrl(''); Alert.alert('已加入任务', '服务端已收到下载请求。'); }
-    catch { Alert.alert('提交失败', '无法连接服务端，请检查地址和网络。'); }
-    finally { setSubmitting(false); }
-  };
-  return <ScrollView contentContainerStyle={styles.page}>
-    <Text style={styles.eyebrow}>SaveXTube</Text><Text style={styles.title}>下载你想保存的内容</Text>
-    <Text style={styles.muted}>支持视频、音乐、图片和磁力链接</Text>
-    <View style={styles.panel}><Text style={styles.label}>内容链接</Text><TextInput value={url} onChangeText={setUrl} placeholder="粘贴 URL 或磁力链接" placeholderTextColor="#8a95a5" autoCapitalize="none" autoCorrect={false} style={styles.input} /><Pressable disabled={submitting} onPress={()=>{void submit()}} style={[styles.button, submitting && styles.buttonDisabled]}><Text style={styles.buttonText}>{submitting ? '提交中…' : '开始下载'}</Text></Pressable></View>
-    <Text style={styles.section}>快捷入口</Text><View style={styles.quickRow}>{['YouTube','Bilibili','音乐','图片'].map(item => <View key={item} style={styles.quick}><Text style={styles.quickText}>{item}</Text></View>)}</View>
-  </ScrollView>;
-}
-const styles=StyleSheet.create({page:{padding:24,backgroundColor:'#f7f9fc',flexGrow:1},eyebrow:{fontSize:14,fontWeight:'700',color:'#2f7df6',letterSpacing:1},title:{fontSize:30,fontWeight:'800',color:'#172033',marginTop:10},muted:{fontSize:15,color:'#657187',marginTop:8},panel:{backgroundColor:'#fff',borderRadius:10,padding:18,marginTop:28,borderWidth:1,borderColor:'#e5eaf2'},label:{fontSize:14,fontWeight:'700',color:'#344054'},input:{height:50,borderWidth:1,borderColor:'#d8dfeb',borderRadius:8,paddingHorizontal:14,marginTop:10,fontSize:15,color:'#172033'},button:{height:50,borderRadius:8,backgroundColor:'#2f7df6',alignItems:'center',justifyContent:'center',marginTop:12},buttonDisabled:{opacity:0.65},buttonText:{color:'#fff',fontSize:16,fontWeight:'700'},section:{fontSize:17,fontWeight:'800',color:'#172033',marginTop:28},quickRow:{flexDirection:'row',gap:10,marginTop:12,flexWrap:'wrap'},quick:{backgroundColor:'#eaf2ff',paddingVertical:12,paddingHorizontal:16,borderRadius:8},quickText:{color:'#245fc4',fontWeight:'700'}});
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { dashboardStats, loadServerUrl, submitDownload } from '@/src/services/api';
+export default function Home(){const [url,setUrl]=useState('');const [stats,setStats]=useState<any>({});const [loading,setLoading]=useState(false);const load=useCallback(async()=>{setLoading(true);try{setStats(await dashboardStats(await loadServerUrl()))}catch{}finally{setLoading(false)}},[]);useEffect(()=>{void load()},[load]);const submit=async()=>{if(!url.trim()){Alert.alert('请粘贴链接');return}try{await submitDownload(await loadServerUrl(),url);setUrl('');Alert.alert('已加入下载队列');await load()}catch{Alert.alert('提交失败','请先登录并检查服务端。')}};const values=[['总下载',stats.total_downloads??stats.total??0],['今日',stats.today_downloads??stats.today??0],['进行中',stats.active_downloads??stats.running??0],['成功',stats.successful_downloads??stats.success??0],['失败',stats.failed_downloads??stats.failed??0],['成功率',`${stats.success_rate??0}%`]];return <ScrollView style={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={()=>{void load()}}/>}><Text style={s.title}>首页</Text><View style={s.submit}><TextInput value={url} onChangeText={setUrl} placeholder="粘贴视频或音乐链接" autoCapitalize="none" autoCorrect={false} style={s.input}/><Pressable style={s.button} onPress={()=>{void submit()}}><Text style={s.buttonText}>下载</Text></Pressable></View><View style={s.grid}>{values.map(([k,v])=><View key={String(k)} style={s.stat}><Text style={s.label}>{k}</Text><Text style={s.value}>{String(v)}</Text></View>)}</View><View style={s.panel}><Text style={s.panelTitle}>平台分布</Text>{Object.entries(stats.platforms??stats.platform_distribution??{}).slice(0,8).map(([k,v])=><View key={k} style={s.line}><Text style={s.lineLabel}>{k}</Text><Text style={s.lineValue}>{String(v)}</Text></View>)}</View><View style={s.panel}><Text style={s.panelTitle}>存储空间</Text><Text style={s.storage}>{stats.storage_used_human??stats.storage?.used_human??'--'}</Text></View></ScrollView>}
+const s=StyleSheet.create({page:{flex:1,padding:20,backgroundColor:'#f5f7fb'},title:{fontSize:34,fontWeight:'800',color:'#141922',marginTop:8},submit:{flexDirection:'row',backgroundColor:'#fff',padding:12,borderRadius:8,marginTop:22},input:{flex:1,height:44,paddingHorizontal:10,color:'#172033'},button:{width:72,height:44,borderRadius:8,backgroundColor:'#2f7df6',alignItems:'center',justifyContent:'center'},buttonText:{color:'#fff',fontWeight:'700'},grid:{flexDirection:'row',flexWrap:'wrap',gap:10,marginTop:16},stat:{width:'31%',minWidth:96,backgroundColor:'#fff',padding:15,borderRadius:8,alignItems:'center'},label:{color:'#657187',fontSize:13},value:{color:'#172033',fontSize:24,fontWeight:'800',marginTop:7},panel:{backgroundColor:'#fff',padding:16,borderRadius:8,marginTop:14},panelTitle:{fontSize:17,fontWeight:'800',color:'#172033'},line:{flexDirection:'row',justifyContent:'space-between',paddingVertical:8},lineLabel:{color:'#344054'},lineValue:{fontWeight:'700',color:'#172033'},storage:{fontSize:25,fontWeight:'800',color:'#172033',marginTop:10,marginBottom:8}});

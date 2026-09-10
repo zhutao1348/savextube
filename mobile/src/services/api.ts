@@ -41,6 +41,14 @@ export const listFiles = (server: string) => request(server, '/api/files');
 export const listSubscriptions = (server: string) => request(server, '/api/subscriptions');
 export const listLiveRooms = (server: string) => request(server, '/api/live/rooms');
 export const dashboardStats = (server: string) => request(server, '/api/dashboard-stats');
+export const serverVersion = (server: string) => request(server, '/api/version');
+export const listLogs = (server: string) => request(server, '/api/logs?lines=500');
+export const monitorStats = (server: string) => request(server, '/api/admin/monitor');
+export const changePassword = (server:string,currentPassword:string,newPassword:string) => request(server,'/api/auth/change_password',{method:'POST',body:JSON.stringify({current_password:currentPassword,new_password:newPassword})});
+export async function fileAccessUrl(server:string,historyId:string,fileIndex:string,download=false){
+  const token=await SecureStore.getItemAsync(TOKEN_KEY);const base=server.replace(/\/$/,'');const path=`/api/files/${historyId}/${fileIndex}/${download?'download':'stream'}`;
+  return `${base}${path}${token?`?token=${encodeURIComponent(token)}`:''}`;
+}
 export const controlJob = (server: string, id: string, action: 'pause'|'resume'|'cancel') => request(server, `/api/job/${id}/${action}`, { method: 'POST' });
 export const controlSubscription = (server: string, id: string, action: 'run'|'toggle') => request(server, `/api/subscriptions/${id}/${action}`, { method: 'POST' });
 export const controlLiveRoom = (server: string, id: string, action: 'start'|'stop'|'toggle'|'check') => request(server, `/api/live/rooms/${id}/${action}`, { method: 'POST' });
